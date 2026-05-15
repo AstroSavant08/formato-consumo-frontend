@@ -35,7 +35,8 @@ export default function RegistroEntregas() {
     };
 
     const filteredRows = rows.filter(r => {
-        const matchMes = filtroMes === '' || (
+        // Mostrar siempre filas sin fecha (recién creadas), o las que coinciden con el mes
+        const matchMes = filtroMes === '' || r.fecha === '' || (
             r.fecha !== '' && new Date(r.fecha + 'T00:00:00').getMonth() === Number(filtroMes)
         );
         const matchProducto = filtroProducto === '' || r.producto.toLowerCase().includes(filtroProducto.toLowerCase());
