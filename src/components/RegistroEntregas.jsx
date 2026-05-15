@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MESES } from '../data/productos';
 import { exportControlEntregas } from '../utils/exportExcel';
 
 const EMPTY_ROW = () => ({
@@ -17,7 +18,7 @@ export default function RegistroEntregas() {
     const [rows, setRows] = useState(() =>
         [EMPTY_ROW()]
     );
-    const [filtroFecha, setFiltroFecha] = useState('');
+    const [filtroMes, setFiltroMes] = useState(String(new Date().getMonth()));
     const [filtroProducto, setFiltroProducto] = useState('');
 
     const handleCell = (rowIdx, field, val) => {
@@ -34,9 +35,11 @@ export default function RegistroEntregas() {
     };
 
     const filteredRows = rows.filter(r => {
-        const matchFecha = filtroFecha === '' || r.fecha.toLowerCase().includes(filtroFecha.toLowerCase());
+        const matchMes = filtroMes === '' || (
+            r.fecha !== '' && new Date(r.fecha + 'T00:00:00').getMonth() === Number(filtroMes)
+        );
         const matchProducto = filtroProducto === '' || r.producto.toLowerCase().includes(filtroProducto.toLowerCase());
-        return matchFecha && matchProducto;
+        return matchMes && matchProducto;
     });
 
     const filasConDatos = rows.filter(r => r.producto || r.fecha).length;
@@ -60,23 +63,40 @@ export default function RegistroEntregas() {
 
             {/* Filtros */}
             <div className="filter-bar">
-                <label><i className="bi bi-search me-1" />Buscar:</label>
-                <input
-                    type="text"
+                <label><i className="bi bi-calendar-month me-1" />Mes:</label>
+                <select
                     className="filter-select"
-                    placeholder="Filtrar por fecha..."
-                    style={{ minWidth: 150 }}
-                    value={filtroFecha}
-                    onChange={e => setFiltroFecha(e.target.value)}
-                />
+                    value={filtroMes}
+                    onChange={e => setFiltroMes(e.target.value)}
+                    style={{ minWidth: 130 }}
+                >
+                    <option value="">Todos los meses</option>
+                    {MESES.map((m, i) => (
+                        <option key={i} value={i}>{m}</option>
+                    ))}
+                </select>
+                <label className="ms-2"><i className="bi bi-search me-1" />Producto:</label>
                 <input
                     type="text"
                     className="filter-select"
                     placeholder="Filtrar por producto..."
-                    style={{ minWidth: 180 }}
+                    style={{ minWidth: 200 }}
                     value={filtroProducto}
                     onChange={e => setFiltroProducto(e.target.value)}
                 />
+                {filtroMes !== '' && (
+                    <button
+                        onClick={() => setFiltroMes('')}
+                        style={{
+                            background: 'none', border: '1px solid #cbd5e1', borderRadius: 6,
+                            padding: '0.25rem 0.6rem', fontSize: '0.76rem', color: '#64748b',
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem'
+                        }}
+                        title="Quitar filtro de mes"
+                    >
+                        <i className="bi bi-x" /> {MESES[Number(filtroMes)]}
+                    </button>
+                )}
                 <span className="ms-auto" style={{ fontSize: '0.78rem', color: '#64748b' }}>
                     Registros con datos: <strong>{filasConDatos}</strong>
                 </span>

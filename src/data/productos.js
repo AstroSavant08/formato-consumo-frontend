@@ -68,10 +68,10 @@ export const initConsumoAnio = () =>
     cantidades: Array(12).fill(0),
   }));
 
-// Datos de pedido por mes
+// Datos de pedido anual (cantidad solicitada por mes)
 export const initPedidoMes = () =>
   PRODUCTOS.map(p => ({
     ...p,
-    cantidadSolicitar: 0,
-    dineroBsolicitado: "",
+    cantidades: Array(12).fill(0),
+    dineroSolicitado: '',
   }));

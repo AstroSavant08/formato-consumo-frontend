@@ -1,15 +1,14 @@
-import { useState } from 'react';
-import { MESES, initPedidoMes } from '../data/productos';
+import { useState, useMemo } from 'react';
+import { MESES, MESES_SHORT, initPedidoMes } from '../data/productos';
 import { exportFormatoPedido } from '../utils/exportExcel';
 
 const ANIO_ACTUAL = new Date().getFullYear();
-const MES_ACTUAL = new Date().getMonth(); // 0-based
+const MES_ACTUAL = new Date().getMonth();
 
 const EMPTY_ESPECIAL = () => ({ que: '', cantidad: '' });
 
 export default function FormatoPedido() {
     const [rows, setRows] = useState(initPedidoMes);
-    const [mes, setMes] = useState(MES_ACTUAL);
     const [anio, setAnio] = useState(ANIO_ACTUAL);
     const [especial, setEspecial] = useState([EMPTY_ESPECIAL(), EMPTY_ESPECIAL(), EMPTY_ESPECIAL()]);
     const [firma, setFirma] = useState({
@@ -25,10 +24,13 @@ export default function FormatoPedido() {
         ));
     };
 
-    const handleCantidad = (idx, val) => {
-        setRows(prev => prev.map((r, i) =>
-            i === idx ? { ...r, cantidadSolicitar: val === '' ? 0 : parseFloat(val) || 0 } : r
-        ));
+    const handleCantidad = (rowIdx, mesIdx, val) => {
+        setRows(prev => prev.map((r, i) => {
+            if (i !== rowIdx) return r;
+            const cant = [...r.cantidades];
+            cant[mesIdx] = val === '' ? 0 : parseFloat(val) || 0;
+            return { ...r, cantidades: cant };
+        }));
     };
 
     const handleDinero = (idx, val) => {
@@ -47,7 +49,15 @@ export default function FormatoPedido() {
 
     const handleFirma = (field, val) => setFirma(prev => ({ ...prev, [field]: val }));
 
-    const totalSolicitar = rows.reduce((s, r) => s + Number(r.cantidadSolicitar || 0), 0);
+    const totalSolicitar = useMemo(() =>
+        rows.reduce((s, r) => s + r.cantidades.reduce((a, v) => a + Number(v || 0), 0), 0),
+        [rows]
+    );
+
+    const totalPorMes = useMemo(() =>
+        MESES.map((_, mi) => rows.reduce((s, r) => s + Number(r.cantidades[mi] || 0), 0)),
+        [rows]
+    );
 
     const handleExport = async () => {
         await exportFormatoPedido(rows, MESES[mes], anio, especial, firma);
@@ -63,17 +73,6 @@ export default function FormatoPedido() {
                         Formato de Pedido
                     </h5>
                     <div className="d-flex align-items-center gap-2 flex-wrap">
-                        <label className="text-white-50" style={{ fontSize: '0.8rem' }}>Mes:</label>
-                        <select
-                            className="filter-select"
-                            value={mes}
-                            onChange={e => setMes(Number(e.target.value))}
-                            style={{ minWidth: 110 }}
-                        >
-                            {MESES.map((m, i) => (
-                                <option key={i} value={i}>{m}</option>
-                            ))}
-                        </select>
                         <label className="text-white-50" style={{ fontSize: '0.8rem' }}>Año:</label>
                         <input
                             type="number"
@@ -89,74 +88,108 @@ export default function FormatoPedido() {
                     </div>
                 </div>
 
-                {/* Stat */}
+                {/* Info bar */}
                 <div className="filter-bar">
                     <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
-                        Pedido para: <strong>{MESES[mes]} {anio}</strong>
+                        Año: <strong>{anio}</strong>
                     </span>
                     <span className="ms-auto" style={{ fontSize: '0.82rem', color: '#64748b' }}>
-                        Total unidades a solicitar: <strong>{totalSolicitar.toLocaleString('es-CO', { minimumFractionDigits: 1 })}</strong>
+                        Total unidades solicitadas en el año: <strong>{totalSolicitar.toLocaleString('es-CO', { minimumFractionDigits: 1 })}</strong>
                     </span>
                 </div>
 
-                {/* Tabla productos */}
+                {/* Tabla productos — 12 columnas de meses */}
                 <div className="table-wrap">
                     <table className="data-table">
                         <thead>
                             <tr>
                                 <th style={{ width: 36 }}>#</th>
-                                <th style={{ textAlign: 'left', minWidth: 250 }}>PRODUCTOS</th>
-                                <th>Stock Debido</th>
-                                <th>Cantidad a Solicitar</th>
-                                <th>Dinero a Solicitar</th>
+                                <th style={{ textAlign: 'left', minWidth: 200 }}>PRODUCTOS</th>
+                                <th style={{ minWidth: 90 }}>Stock<br />debido</th>
+                                {MESES_SHORT.map((m, mi) => (
+                                    <th
+                                        key={mi}
+                                        style={{
+                                            minWidth: 72,
+                                            background: mi === MES_ACTUAL ? '#1d4ed8' : '#1e3a8a',
+                                            borderBottom: mi === MES_ACTUAL ? '3px solid #f59e0b' : undefined,
+                                        }}
+                                    >
+                                        Cant.<br />{m}
+                                    </th>
+                                ))}
+                                <th className="th-total" style={{ minWidth: 90 }}>Total<br />Año</th>
+                                <th className="th-dinero" style={{ minWidth: 115 }}>Dinero a<br />solicitar</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {rows.map((p, i) => (
-                                <tr key={p.id}>
-                                    <td className="center">
-                                        <span className="badge-num">{p.id}</span>
-                                    </td>
-                                    <td>{p.nombre}</td>
-                                    <td style={{ padding: '0.3rem 0.5rem' }}>
-                                        <input
-                                            type="number"
-                                            className="input-cell"
-                                            style={{ width: 82 }}
-                                            min={0}
-                                            step={0.5}
-                                            value={p.stockDebido === 0 ? '' : p.stockDebido}
-                                            placeholder="0"
-                                            onChange={e => handleStock(i, e.target.value)}
-                                        />
-                                    </td>
-                                    <td style={{ padding: '0.3rem 0.5rem' }}>
-                                        <input
-                                            type="number"
-                                            className="input-cell"
-                                            min={0}
-                                            step={0.5}
-                                            value={p.cantidadSolicitar === 0 ? '' : p.cantidadSolicitar}
-                                            placeholder="0"
-                                            onChange={e => handleCantidad(i, e.target.value)}
-                                        />
-                                    </td>
-                                    <td style={{ padding: '0.3rem 0.5rem' }}>
-                                        <input
-                                            type="text"
-                                            className="input-cell"
-                                            style={{ width: 120 }}
-                                            placeholder="$ —"
-                                            value={p.dineroSolicitado || ''}
-                                            onChange={e => handleDinero(i, e.target.value)}
-                                        />
-                                    </td>
-                                </tr>
-                            ))}
+                            {rows.map((p, ri) => {
+                                const totalRow = p.cantidades.reduce((s, v) => s + Number(v || 0), 0);
+                                return (
+                                    <tr key={p.id}>
+                                        <td className="center">
+                                            <span className="badge-num">{p.id}</span>
+                                        </td>
+                                        <td style={{ fontWeight: 500 }}>{p.nombre}</td>
+                                        <td style={{ padding: '0.3rem 0.4rem' }}>
+                                            <input
+                                                type="number"
+                                                className="input-cell"
+                                                style={{ width: 70 }}
+                                                min={0}
+                                                step={0.5}
+                                                value={p.stockDebido === 0 ? '' : p.stockDebido}
+                                                placeholder="0"
+                                                onChange={e => handleStock(ri, e.target.value)}
+                                            />
+                                        </td>
+                                        {p.cantidades.map((val, mi) => (
+                                            <td
+                                                key={mi}
+                                                style={{
+                                                    padding: '0.3rem 0.25rem',
+                                                    background: mi === MES_ACTUAL ? '#eff6ff' : undefined,
+                                                    borderLeft: mi === MES_ACTUAL ? '2px solid #2563eb' : undefined,
+                                                    borderRight: mi === MES_ACTUAL ? '2px solid #2563eb' : undefined,
+                                                }}
+                                            >
+                                                <input
+                                                    type="number"
+                                                    className="input-cell"
+                                                    style={{ width: 62 }}
+                                                    min={0}
+                                                    step={0.5}
+                                                    value={val === 0 ? '' : val}
+                                                    placeholder="0"
+                                                    onChange={e => handleCantidad(ri, mi, e.target.value)}
+                                                />
+                                            </td>
+                                        ))}
+                                        <td className="num" style={{ fontWeight: 700, color: '#3730a3', background: '#eff6ff' }}>
+                                            {totalRow.toLocaleString('es-CO', { minimumFractionDigits: 1 })}
+                                        </td>
+                                        <td style={{ padding: '0.3rem 0.4rem', background: '#ecfdf5' }}>
+                                            <input
+                                                type="text"
+                                                className="input-cell"
+                                                style={{ width: 95 }}
+                                                placeholder="$ —"
+                                                value={p.dineroSolicitado || ''}
+                                                onChange={e => handleDinero(ri, e.target.value)}
+                                            />
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colSpan={3} style={{ textAlign: 'right' }}>TOTALES</td>
+                                <td colSpan={3} style={{ textAlign: 'right', letterSpacing: '0.04em' }}>TOTALES</td>
+                                {totalPorMes.map((t, mi) => (
+                                    <td key={mi} className="num">
+                                        {t.toLocaleString('es-CO', { minimumFractionDigits: 1 })}
+                                    </td>
+                                ))}
                                 <td className="num">
                                     {totalSolicitar.toLocaleString('es-CO', { minimumFractionDigits: 1 })}
                                 </td>
