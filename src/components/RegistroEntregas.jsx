@@ -3,6 +3,7 @@ import { MESES } from '../data/productos';
 import { fetchAreas, fetchProductos } from '../services/catalogosService';
 import {
     createEntrega,
+    fetchAllEntregas,
     fetchEntregas,
     monthToApiParam,
     productToApiParam,
@@ -101,6 +102,8 @@ export default function RegistroEntregas() {
     const [filtroMes, setFiltroMes] = useState('');
     const [filtroProductoInput, setFiltroProductoInput] = useState('');
     const [filtroProductoApi, setFiltroProductoApi] = useState('');
+    const [exporting, setExporting] = useState(false);
+    const [exportError, setExportError] = useState(null);
     const entregasRequestSeq = useRef(0);
 
     const loadEntregas = useCallback(async (
@@ -252,24 +255,55 @@ export default function RegistroEntregas() {
         });
     };
 
-    const filteredDraftRows = draftRows.filter(r => {
+    const getDraftExportRows = () => draftRows.filter(r => {
+        if (!r.producto && !r.fecha) return false;
         const matchMes = filtroMes === '' || r.fecha === '' || (
             r.fecha !== '' && new Date(r.fecha + 'T00:00:00').getMonth() === Number(filtroMes)
         );
         return matchMes && matchesProductFilter(r, filtroProductoInput);
     });
 
+    const filteredDraftRows = getDraftExportRows();
+
     const displayRows = [
         ...loadedRows.map(row => ({ row, kind: 'loaded' })),
         ...filteredDraftRows.map((row, idx) => ({ row, kind: 'draft', draftIdx: draftRows.indexOf(row), idx })),
     ];
 
-    const allExportRows = [
-        ...loadedRows.filter(r => r.producto || r.fecha),
-        ...draftRows.filter(r => r.producto || r.fecha),
-    ];
+    const draftExportRows = filteredDraftRows;
+    const filasConDatos = pagination.total + draftExportRows.length;
 
-    const filasConDatos = allExportRows.length;
+    const handleExport = async () => {
+        if (exporting) return;
+
+        setExporting(true);
+        setExportError(null);
+        setGlobalMessage(null);
+
+        try {
+            const filters = {
+                ...monthToApiParam(filtroMes),
+                ...productToApiParam(filtroProductoApi),
+            };
+            const { data: allLoaded, meta } = await fetchAllEntregas(filters);
+            const drafts = getDraftExportRows();
+
+            if (meta.total !== allLoaded.length) {
+                throw new Error(
+                    `La exportación recuperó ${allLoaded.length} registros, pero el total filtrado es ${meta.total}.`,
+                );
+            }
+
+            await exportControlEntregas([...allLoaded, ...drafts]);
+
+            const draftNote = drafts.length ? ` + ${drafts.length} borrador${drafts.length === 1 ? '' : 'es'}` : '';
+            setGlobalMessage(`Exportadas ${allLoaded.length + drafts.length} filas (${allLoaded.length} desde API${draftNote}).`);
+        } catch (err) {
+            setExportError(formatApiError(err));
+        } finally {
+            setExporting(false);
+        }
+    };
 
     const renderRow = (row, options) => {
         const { kind, draftIdx } = options;
@@ -451,10 +485,12 @@ export default function RegistroEntregas() {
                 </h5>
                 <button
                     className="btn-export"
-                    onClick={() => exportControlEntregas(allExportRows)}
+                    type="button"
+                    disabled={exporting}
+                    onClick={handleExport}
                 >
-                    <i className="bi bi-file-earmark-excel" />
-                    Exportar Excel
+                    <i className={`bi ${exporting ? 'bi-arrow-repeat' : 'bi-file-earmark-excel'}`} />
+                    {exporting ? 'Exportando...' : 'Exportar Excel'}
                 </button>
             </div>
 
@@ -499,6 +535,12 @@ export default function RegistroEntregas() {
                     <span style={{ color: '#15803d' }}>
                         <i className="bi bi-check-circle me-1" />
                         {globalMessage}
+                    </span>
+                )}
+                {exportError && (
+                    <span style={{ color: '#dc2626' }}>
+                        <i className="bi bi-exclamation-triangle me-1" />
+                        Exportación: {exportError}
                     </span>
                 )}
             </div>

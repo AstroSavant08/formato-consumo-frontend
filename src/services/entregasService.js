@@ -125,6 +125,31 @@ export async function fetchEntregas(params = {}) {
 }
 
 /**
+ * Obtiene todas las entregas que coinciden con los filtros, recorriendo todas las páginas.
+ * Solo lectura; reutiliza los mismos parámetros que fetchEntregas (excepto page).
+ * @param {object} [params] - Mismos filtros que fetchEntregas; page se ignora si se envía.
+ * @returns {Promise<{ data: object[], meta: object }>}
+ */
+export async function fetchAllEntregas(params = {}) {
+    const { page: _page, ...filters } = params;
+    const firstPage = await fetchEntregas({ page: 1, ...filters });
+    const allRows = [...firstPage.data];
+
+    for (let page = 2; page <= firstPage.meta.last_page; page++) {
+        const result = await fetchEntregas({ page, ...filters });
+        allRows.push(...result.data);
+    }
+
+    return {
+        data: allRows,
+        meta: {
+            ...firstPage.meta,
+            total: firstPage.meta.total ?? allRows.length,
+        },
+    };
+}
+
+/**
  * @param {object} row
  * @returns {Promise<object>}
  */
