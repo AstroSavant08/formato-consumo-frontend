@@ -60,29 +60,23 @@ export function validateRow(row) {
 }
 
 /**
- * Calcula rango de fechas para filtro por mes (año actual).
+ * Parámetro de API para filtro por mes calendario (0-11), sin restringir el año.
+ * Permite consultar entregas históricas (2022-2024) al filtrar por mes.
  * @param {string|number} monthIndex - 0-11 o cadena vacía
- * @param {number} [year]
- * @returns {{ desde?: string, hasta?: string }}
+ * @returns {{ mes?: number }}
  */
-export function monthToDateRange(monthIndex, year = new Date().getFullYear()) {
+export function monthToApiParam(monthIndex) {
     if (monthIndex === '' || monthIndex === null || monthIndex === undefined) {
         return {};
     }
 
-    const month = Number(monthIndex);
-    const monthStr = String(month + 1).padStart(2, '0');
-    const lastDay = new Date(year, month + 1, 0).getDate();
-
-    return {
-        desde: `${year}-${monthStr}-01`,
-        hasta: `${year}-${monthStr}-${String(lastDay).padStart(2, '0')}`,
-    };
+    return { mes: Number(monthIndex) };
 }
 
 /**
  * @param {object} [params]
  * @param {number} [params.page]
+ * @param {number} [params.mes] - Índice de mes 0-11 (filtra por mes sin restringir año)
  * @param {string} [params.desde]
  * @param {string} [params.hasta]
  * @param {string} [params.fuente]
@@ -92,6 +86,9 @@ export async function fetchEntregas(params = {}) {
     const query = new URLSearchParams();
 
     if (params.page) query.set('page', String(params.page));
+    if (params.mes !== undefined && params.mes !== null && params.mes !== '') {
+        query.set('mes', String(params.mes));
+    }
     if (params.desde) query.set('desde', params.desde);
     if (params.hasta) query.set('hasta', params.hasta);
     if (params.fuente) query.set('fuente', params.fuente);

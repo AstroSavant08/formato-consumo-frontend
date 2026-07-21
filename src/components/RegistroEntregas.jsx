@@ -2,10 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { MESES } from '../data/productos';
 import { fetchAreas, fetchProductos } from '../services/catalogosService';
 import {
-    apiEntregaToRow,
     createEntrega,
     fetchEntregas,
-    monthToDateRange,
+    monthToApiParam,
     validateRow,
 } from '../services/entregasService';
 import { exportControlEntregas } from '../utils/exportExcel';
@@ -96,7 +95,7 @@ export default function RegistroEntregas() {
     const [entregasError, setEntregasError] = useState(null);
     const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0 });
     const [globalMessage, setGlobalMessage] = useState(null);
-    const [filtroMes, setFiltroMes] = useState(String(new Date().getMonth()));
+    const [filtroMes, setFiltroMes] = useState('');
     const [filtroProducto, setFiltroProducto] = useState('');
 
     const loadEntregas = useCallback(async (page = 1, monthFilter = filtroMes) => {
@@ -104,8 +103,8 @@ export default function RegistroEntregas() {
         setEntregasError(null);
 
         try {
-            const range = monthToDateRange(monthFilter);
-            const result = await fetchEntregas({ page, ...range });
+            const monthParam = monthToApiParam(monthFilter);
+            const result = await fetchEntregas({ page, ...monthParam });
             setLoadedRows(result.data);
             setPagination(result.meta);
         } catch (err) {
@@ -198,16 +197,6 @@ export default function RegistroEntregas() {
 
         try {
             const entrega = await createEntrega(row);
-            const savedRow = apiEntregaToRow(entrega);
-
-            setLoadedRows(prev => {
-                if (prev.some(r => r.apiId === savedRow.apiId)) {
-                    return prev;
-                }
-
-                setPagination(p => ({ ...p, total: p.total + 1 }));
-                return [savedRow, ...prev];
-            });
 
             setDraftRows(prev => {
                 const next = prev.filter((_, i) => i !== rowIdx);
@@ -215,6 +204,7 @@ export default function RegistroEntregas() {
             });
 
             setGlobalMessage(`Entrega #${entrega.id} guardada correctamente.`);
+            await loadEntregas(1, filtroMes);
         } catch (err) {
             updateDraftRow(rowIdx, {
                 saving: false,
