@@ -1,0 +1,719 @@
+﻿{
+  "summary": {
+    "totalRecords": 1163,
+    "sheetName": "BD",
+    "columns": 7,
+    "dateRange": {
+      "from": "2022-01-26",
+      "to": "2024-02-22"
+    },
+    "uniqueProducts": 31,
+    "uniqueAreas": 12,
+    "hasPrices": false,
+    "hasMonthlyMatrix": false,
+    "hasPedidosSheet": false,
+    "hasExistencias": false
+  },
+  "missingFields": {
+    "fecha": 0,
+    "producto": 0,
+    "cantidad": 1,
+    "unidad": 2,
+    "area": 0,
+    "quienRecibe": 0,
+    "entrega": 0
+  },
+  "invalidQuantities": 0,
+  "exactDuplicateGroups": 5,
+  "exactDuplicateRecords": 10,
+  "topDuplicateExamples": [
+    {
+      "key": "2023-10-02|jabon loza liquido|1000|administrativo|vivia mulato",
+      "count": 2
+    },
+    {
+      "key": "2023-06-29|azucar|500|administrativo|socorro ramos",
+      "count": 2
+    },
+    {
+      "key": "2023-06-08|azucar|500|produccion|lina vera",
+      "count": 2
+    },
+    {
+      "key": "2023-01-12|bolsa negra mediana industrial|30|administrativo|vivia mulato",
+      "count": 2
+    },
+    {
+      "key": "2022-12-05|bolsa negra mediana industrial|20|administrativo|vivia mulato",
+      "count": 2
+    }
+  ],
+  "units": [
+    "CU├æETE",
+    "GALON",
+    "UND",
+    "UNIDAD",
+    "cm3",
+    "g",
+    "l",
+    "ml"
+  ],
+  "monthlyRecordCounts": {
+    "2022-01": 5,
+    "2022-02": 5,
+    "2022-04": 5,
+    "2022-05": 5,
+    "2022-06": 5,
+    "2022-07": 5,
+    "2022-08": 4,
+    "2022-10": 8,
+    "2022-11": 65,
+    "2022-12": 49,
+    "2023-01": 91,
+    "2023-02": 66,
+    "2023-03": 55,
+    "2023-04": 32,
+    "2023-05": 114,
+    "2023-06": 75,
+    "2023-07": 88,
+    "2023-08": 93,
+    "2023-09": 63,
+    "2023-10": 93,
+    "2023-11": 60,
+    "2023-12": 53,
+    "2024-01": 42,
+    "2024-02": 82
+  },
+  "areas": [
+    {
+      "name": "ADMINISTRATIVO",
+      "records": 725,
+      "totalQty": 201082.5,
+      "uniqueProducts": 28
+    },
+    {
+      "name": "LABORATORIO",
+      "records": 125,
+      "totalQty": 67923,
+      "uniqueProducts": 16
+    },
+    {
+      "name": "ALMACEN",
+      "records": 91,
+      "totalQty": 40552,
+      "uniqueProducts": 5
+    },
+    {
+      "name": "PORTERIA",
+      "records": 78,
+      "totalQty": 23025,
+      "uniqueProducts": 11
+    },
+    {
+      "name": "PRODUCCION",
+      "records": 54,
+      "totalQty": 21330,
+      "uniqueProducts": 11
+    },
+    {
+      "name": "DISTRIBUCION",
+      "records": 49,
+      "totalQty": 22305,
+      "uniqueProducts": 7
+    },
+    {
+      "name": "MANTENIMIENTO",
+      "records": 33,
+      "totalQty": 17460,
+      "uniqueProducts": 7
+    },
+    {
+      "name": "OFICINAS",
+      "records": 3,
+      "totalQty": 1270,
+      "uniqueProducts": 3
+    },
+    {
+      "name": "BODEGA REDDI",
+      "records": 2,
+      "totalQty": 2,
+      "uniqueProducts": 1
+    },
+    {
+      "name": "MERCADEO Y VENTAS",
+      "records": 1,
+      "totalQty": 9,
+      "uniqueProducts": 1
+    },
+    {
+      "name": "AFUERA",
+      "records": 1,
+      "totalQty": 1000,
+      "uniqueProducts": 1
+    },
+    {
+      "name": "TALENTO HUMANO",
+      "records": 1,
+      "totalQty": 150,
+      "uniqueProducts": 1
+    }
+  ],
+  "products": [
+    {
+      "name": "AZUCAR",
+      "records": 143,
+      "totalQty": 127500,
+      "areas": [
+        "ADMINISTRATIVO",
+        "LABORATORIO",
+        "PORTERIA",
+        "PRODUCCION",
+        "DISTRIBUCION",
+        "OFICINAS"
+      ],
+      "units": [
+        "g"
+      ]
+    },
+    {
+      "name": "PAPEL HIGIENICO",
+      "records": 143,
+      "totalQty": 2631,
+      "areas": [
+        "ADMINISTRATIVO",
+        "LABORATORIO",
+        "PORTERIA",
+        "PRODUCCION",
+        "MANTENIMIENTO",
+        "ALMACEN"
+      ],
+      "units": [
+        "UND",
+        "UNIDAD"
+      ]
+    },
+    {
+      "name": "CAF├ë",
+      "records": 136,
+      "totalQty": 88000,
+      "areas": [
+        "ADMINISTRATIVO",
+        "LABORATORIO",
+        "PORTERIA",
+        "PRODUCCION",
+        "DISTRIBUCION",
+        "OFICINAS",
+        "MANTENIMIENTO"
+      ],
+      "units": [
+        "g"
+      ]
+    },
+    {
+      "name": "BOLSA NEGRA MEDIANA INDUSTRIAL",
+      "records": 124,
+      "totalQty": 4584,
+      "areas": [
+        "ADMINISTRATIVO",
+        "LABORATORIO",
+        "ALMACEN"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "AMBIENTADOR",
+      "records": 86,
+      "totalQty": 1719,
+      "areas": [
+        "ADMINISTRATIVO",
+        "PORTERIA",
+        "BODEGA REDDI",
+        "ALMACEN",
+        "PRODUCCION",
+        "MANTENIMIENTO",
+        "LABORATORIO"
+      ],
+      "units": [
+        "GALON",
+        "CU├æETE",
+        "ml"
+      ]
+    },
+    {
+      "name": "LIMPIDO",
+      "records": 65,
+      "totalQty": 1063.5,
+      "areas": [
+        "ADMINISTRATIVO",
+        "PORTERIA",
+        "ALMACEN",
+        "LABORATORIO"
+      ],
+      "units": [
+        "GALON",
+        "ml"
+      ]
+    },
+    {
+      "name": "AROMATICA",
+      "records": 63,
+      "totalQty": 1033,
+      "areas": [
+        "ADMINISTRATIVO",
+        "LABORATORIO"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "AXION",
+      "records": 61,
+      "totalQty": 41445,
+      "areas": [
+        "ADMINISTRATIVO",
+        "LABORATORIO",
+        "MANTENIMIENTO",
+        "DISTRIBUCION",
+        "PORTERIA",
+        "PRODUCCION"
+      ],
+      "units": [
+        "g"
+      ]
+    },
+    {
+      "name": "SERVILLETAS",
+      "records": 42,
+      "totalQty": 11320,
+      "areas": [
+        "ADMINISTRATIVO",
+        "OFICINAS",
+        "LABORATORIO"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "ELIMINADOR DE OLORES",
+      "records": 38,
+      "totalQty": 19800,
+      "areas": [
+        "ADMINISTRATIVO",
+        "LABORATORIO",
+        "PORTERIA",
+        "PRODUCCION",
+        "MANTENIMIENTO"
+      ],
+      "units": [
+        "cm3",
+        "ml",
+        "UND"
+      ]
+    },
+    {
+      "name": "BOLSA BLANCA MEDIANA INDUSTRIAL",
+      "records": 30,
+      "totalQty": 855,
+      "areas": [
+        "ADMINISTRATIVO"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "BOLSA VERDE MEDIANA INDUSTRIAL",
+      "records": 28,
+      "totalQty": 840,
+      "areas": [
+        "ADMINISTRATIVO"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "FILTRO DE 8",
+      "records": 28,
+      "totalQty": 3700,
+      "areas": [
+        "PORTERIA",
+        "PRODUCCION",
+        "DISTRIBUCION",
+        "LABORATORIO",
+        "ADMINISTRATIVO"
+      ],
+      "units": [
+        "UND",
+        "g"
+      ]
+    },
+    {
+      "name": "JABON LOZA LIQUIDO",
+      "records": 27,
+      "totalQty": 26002,
+      "areas": [
+        "ADMINISTRATIVO",
+        "AFUERA",
+        "PRODUCCION"
+      ],
+      "units": [
+        "l",
+        "ml",
+        "GALON"
+      ]
+    },
+    {
+      "name": "SABRA",
+      "records": 23,
+      "totalQty": 50,
+      "areas": [
+        "ADMINISTRATIVO",
+        "PORTERIA",
+        "LABORATORIO",
+        "DISTRIBUCION"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "PAPEL HIGIENICO PEQUE├æO",
+      "records": 23,
+      "totalQty": 50,
+      "areas": [
+        "PRODUCCION",
+        "ADMINISTRATIVO",
+        "MANTENIMIENTO"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "DETERGENTE",
+      "records": 18,
+      "totalQty": 35200,
+      "areas": [
+        "ALMACEN"
+      ],
+      "units": [
+        "g"
+      ]
+    },
+    {
+      "name": "SILICONA",
+      "records": 17,
+      "totalQty": 5700,
+      "areas": [
+        "ADMINISTRATIVO",
+        "LABORATORIO"
+      ],
+      "units": [
+        "cm3",
+        "ml"
+      ]
+    },
+    {
+      "name": "TOALLAS DE MANO",
+      "records": 16,
+      "totalQty": 2790,
+      "areas": [
+        "ADMINISTRATIVO",
+        "LABORATORIO",
+        "TALENTO HUMANO"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "JABON DE MANO",
+      "records": 14,
+      "totalQty": 14500,
+      "areas": [
+        "ADMINISTRATIVO",
+        "PRODUCCION",
+        "MANTENIMIENTO",
+        "PORTERIA",
+        "LABORATORIO"
+      ],
+      "units": [
+        "ml",
+        "g"
+      ]
+    },
+    {
+      "name": "RAID LATA",
+      "records": 14,
+      "totalQty": 3990,
+      "areas": [
+        "ADMINISTRATIVO",
+        "LABORATORIO",
+        "PORTERIA"
+      ],
+      "units": [
+        "cm3",
+        "ml"
+      ]
+    },
+    {
+      "name": "GUANTES",
+      "records": 9,
+      "totalQty": 18,
+      "areas": [
+        "ADMINISTRATIVO",
+        "DISTRIBUCION"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "CEPILLO DE BA├æO",
+      "records": 3,
+      "totalQty": 3,
+      "areas": [
+        "ADMINISTRATIVO"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "FILTRO DE 2",
+      "records": 3,
+      "totalQty": 300,
+      "areas": [
+        "DISTRIBUCION",
+        "PRODUCCION"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "COLADOR",
+      "records": 2,
+      "totalQty": 2,
+      "areas": [
+        "ADMINISTRATIVO"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "VINAGRE",
+      "records": 2,
+      "totalQty": 2000,
+      "areas": [
+        "ADMINISTRATIVO"
+      ],
+      "units": [
+        "ml"
+      ]
+    },
+    {
+      "name": "VASOS DESECHABLES",
+      "records": 1,
+      "totalQty": 9,
+      "areas": [
+        "MERCADEO Y VENTAS"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "ESPONJA DE BRILLO",
+      "records": 1,
+      "totalQty": 1,
+      "areas": [
+        "ADMINISTRATIVO"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "ESPONJA ALAMBRE",
+      "records": 1,
+      "totalQty": 1,
+      "areas": [
+        "ADMINISTRATIVO"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "ESCOBILLON",
+      "records": 1,
+      "totalQty": 2,
+      "areas": [
+        "ADMINISTRATIVO"
+      ],
+      "units": [
+        "UND"
+      ]
+    },
+    {
+      "name": "JABON PARA MANOS",
+      "records": 1,
+      "totalQty": 1000,
+      "areas": [
+        "ADMINISTRATIVO"
+      ],
+      "units": [
+        "ml"
+      ]
+    }
+  ],
+  "comparison": {
+    "frontendProductCount": 49,
+    "excelProductCount": 31,
+    "matchedCount": 16,
+    "excelOnlyCount": 15,
+    "frontendOnlyCount": 33,
+    "matched": [
+      {
+        "excel": "AMBIENTADOR",
+        "frontend": "Ambientador",
+        "score": 1
+      },
+      {
+        "excel": "AROMATICA",
+        "frontend": "Aromaticas",
+        "score": 0.85
+      },
+      {
+        "excel": "AZUCAR",
+        "frontend": "Azucar",
+        "score": 1
+      },
+      {
+        "excel": "CAF├ë",
+        "frontend": "Caf├®",
+        "score": 1
+      },
+      {
+        "excel": "COLADOR",
+        "frontend": "Colador de tela",
+        "score": 0.85
+      },
+      {
+        "excel": "ELIMINADOR DE OLORES",
+        "frontend": "Eliminador de olores",
+        "score": 1
+      },
+      {
+        "excel": "ESCOBILLON",
+        "frontend": "Escobillon para ba├▒o",
+        "score": 0.85
+      },
+      {
+        "excel": "ESPONJA ALAMBRE",
+        "frontend": "Esponja de alambre",
+        "score": 0.6666666666666666
+      },
+      {
+        "excel": "GUANTES",
+        "frontend": "Guantes para aseo",
+        "score": 0.85
+      },
+      {
+        "excel": "LIMPIDO",
+        "frontend": "Limpido",
+        "score": 1
+      },
+      {
+        "excel": "PAPEL HIGIENICO",
+        "frontend": "Papel higienico - dispensadores",
+        "score": 0.85
+      },
+      {
+        "excel": "SERVILLETAS",
+        "frontend": "Servilletas",
+        "score": 1
+      },
+      {
+        "excel": "SILICONA",
+        "frontend": "Silicona",
+        "score": 1
+      },
+      {
+        "excel": "TOALLAS DE MANO",
+        "frontend": "Toallas de mano",
+        "score": 1
+      },
+      {
+        "excel": "VASOS DESECHABLES",
+        "frontend": "Vasos Desechables",
+        "score": 1
+      },
+      {
+        "excel": "VINAGRE",
+        "frontend": "Vinagre",
+        "score": 1
+      }
+    ],
+    "excelOnly": [
+      "AXION",
+      "BOLSA BLANCA MEDIANA INDUSTRIAL",
+      "BOLSA NEGRA MEDIANA INDUSTRIAL",
+      "BOLSA VERDE MEDIANA INDUSTRIAL",
+      "CEPILLO DE BA├æO",
+      "DETERGENTE",
+      "ESPONJA DE BRILLO",
+      "FILTRO DE 2",
+      "FILTRO DE 8",
+      "JABON DE MANO",
+      "JABON LOZA LIQUIDO",
+      "JABON PARA MANOS",
+      "PAPEL HIGIENICO PEQUE├æO",
+      "RAID LATA",
+      "SABRA"
+    ],
+    "frontendOnly": [
+      "Accion caja",
+      "Accion en barra (mantenimiento)",
+      "Alimento Pandora",
+      "Bicarbonato",
+      "Bolsa blanca - (65*80)",
+      "Bolsa Blanca - (48*50) papeleras",
+      "Bolsa NEGRA - basura (65 * 80)",
+      "Bolsa Negra - canecas (48*50)",
+      "Bolsa verde (48 * 50) cocinetas",
+      "Bolsas rojas",
+      "Caf├® en grano OJAS",
+      "Esplenda/estevia",
+      "Filtros cafetera # 2",
+      "Filtros cafetera # 8",
+      "Insecticida zancudos",
+      "Insecticida cucaracha",
+      "Instacrem gerencias",
+      "Jabon Fab en polvo",
+      "Jabon Lavaloza liquido",
+      "Jabon Liquido (lavamanos)",
+      "Jab├│n Rey en barra",
+      "Man├¡ variado EAA",
+      "Pa├▒os Amarillos",
+      "Pa├▒os microfibra",
+      "Papel Aluminio",
+      "Papel higienico - planta y oficinas pq",
+      "Papel darnel, plastico de envolver",
+      "Platos desechables",
+      "Productos aseo Pandora jab├│n, champu 2 en 1, shampoo pulgas",
+      "Sal libra",
+      "Tenedores desechables medianos",
+      "Zabra - esponja para lavar losa",
+      "Flete"
+    ],
+    "ambiguousMatches": []
+  }
+}

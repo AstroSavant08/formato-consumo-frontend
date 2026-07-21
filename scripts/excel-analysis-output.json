@@ -1,0 +1,264 @@
+﻿{
+  "file": "C:\\xampp\\htdocs\\formato-consumo-frontend\\docs\\Consumo_DESARROLLO.xlsx",
+  "sheetCount": 1,
+  "sheets": [
+    {
+      "name": "BD",
+      "rowCount": 1165,
+      "colCount": 7,
+      "headerRowIdx": 1,
+      "dataRowCount": 1163,
+      "headers": [
+        "FECHA",
+        "PRODUCTO",
+        "CANTIDAD ",
+        "UNIDAD",
+        "AREA DE USO",
+        "QUIEN RECIBE",
+        "ENTREGA"
+      ],
+      "columns": [
+        {
+          "index": 1,
+          "header": "FECHA",
+          "inferredType": "date",
+          "nonEmptyCount": 1163,
+          "samples": [
+            "2024-02-22T00:00:00.000Z",
+            "2024-02-22T00:00:00.000Z",
+            "2024-02-21T00:00:00.000Z",
+            "2024-02-19T00:00:00.000Z",
+            "2024-02-19T00:00:00.000Z"
+          ]
+        },
+        {
+          "index": 2,
+          "header": "PRODUCTO",
+          "inferredType": "string",
+          "nonEmptyCount": 1163,
+          "samples": [
+            "TOALLAS DE MANO",
+            "SERVILLETAS",
+            "AXION",
+            "BOLSA NEGRA MEDIANA INDUSTRIAL",
+            "BOLSA BLANCA MEDIANA INDUSTRIAL"
+          ]
+        },
+        {
+          "index": 3,
+          "header": "CANTIDAD ",
+          "inferredType": "number",
+          "nonEmptyCount": 1162,
+          "samples": [
+            150,
+            270,
+            450,
+            20,
+            30
+          ]
+        },
+        {
+          "index": 4,
+          "header": "UNIDAD",
+          "inferredType": "string",
+          "nonEmptyCount": 1161,
+          "samples": [
+            "UND",
+            "UND",
+            "g",
+            "UND",
+            "UND"
+          ]
+        },
+        {
+          "index": 5,
+          "header": "AREA DE USO",
+          "inferredType": "string",
+          "nonEmptyCount": 1163,
+          "samples": [
+            "ADMINISTRATIVO",
+            "ADMINISTRATIVO",
+            "ADMINISTRATIVO",
+            "ADMINISTRATIVO",
+            "ADMINISTRATIVO"
+          ]
+        },
+        {
+          "index": 6,
+          "header": "QUIEN RECIBE",
+          "inferredType": "string",
+          "nonEmptyCount": 1163,
+          "samples": [
+            "VIVIA MULATO",
+            "VIVIA MULATO",
+            "VIVIA MULATO",
+            "VIVIA MULATO",
+            "VIVIA MULATO"
+          ]
+        },
+        {
+          "index": 7,
+          "header": "ENTREGA",
+          "inferredType": "string",
+          "nonEmptyCount": 1163,
+          "samples": [
+            "VIVIA MULATO",
+            "VIVIA MULATO",
+            "VIVIA MULATO",
+            "VIVIA MULATO",
+            "VIVIA MULATO"
+          ]
+        }
+      ],
+      "monthColumnCount": 0,
+      "monthHeaders": [],
+      "sampleRows": [
+        {
+          "row": 3,
+          "data": [
+            "2024-02-22T00:00:00.000Z",
+            "TOALLAS DE MANO",
+            150,
+            "UND",
+            "ADMINISTRATIVO",
+            "VIVIA MULATO",
+            "VIVIA MULATO"
+          ]
+        },
+        {
+          "row": 4,
+          "data": [
+            "2024-02-22T00:00:00.000Z",
+            "SERVILLETAS",
+            270,
+            "UND",
+            "ADMINISTRATIVO",
+            "VIVIA MULATO",
+            "VIVIA MULATO"
+          ]
+        },
+        {
+          "row": 5,
+          "data": [
+            "2024-02-21T00:00:00.000Z",
+            "AXION",
+            450,
+            "g",
+            "ADMINISTRATIVO",
+            "VIVIA MULATO",
+            "VIVIA MULATO"
+          ]
+        },
+        {
+          "row": 6,
+          "data": [
+            "2024-02-19T00:00:00.000Z",
+            "BOLSA NEGRA MEDIANA INDUSTRIAL",
+            20,
+            "UND",
+            "ADMINISTRATIVO",
+            "VIVIA MULATO",
+            "VIVIA MULATO"
+          ]
+        },
+        {
+          "row": 7,
+          "data": [
+            "2024-02-19T00:00:00.000Z",
+            "BOLSA BLANCA MEDIANA INDUSTRIAL",
+            30,
+            "UND",
+            "ADMINISTRATIVO",
+            "VIVIA MULATO",
+            "VIVIA MULATO"
+          ]
+        },
+        {
+          "row": 8,
+          "data": [
+            "2024-02-19T00:00:00.000Z",
+            "BOLSA VERDE MEDIANA INDUSTRIAL",
+            30,
+            "UND",
+            "ADMINISTRATIVO",
+            "VIVIA MULATO",
+            "VIVIA MULATO"
+          ]
+        },
+        {
+          "row": 9,
+          "data": [
+            "2024-02-19T00:00:00.000Z",
+            "CAF├ë",
+            1000,
+            "g",
+            "ADMINISTRATIVO",
+            "VIVIA MULATO",
+            "VIVIA MULATO"
+          ]
+        },
+        {
+          "row": 10,
+          "data": [
+            "2024-02-19T00:00:00.000Z",
+            "AZUCAR ",
+            1000,
+            "g",
+            "ADMINISTRATIVO",
+            "VIVIA MULATO",
+            "VIVIA MULATO"
+          ]
+        }
+      ],
+      "uniqueProductCount": 31,
+      "uniqueProducts": [
+        "AMBIENTADOR",
+        "AROMATICA",
+        "AXION",
+        "AZUCAR",
+        "BOLSA BLANCA MEDIANA INDUSTRIAL",
+        "BOLSA NEGRA MEDIANA INDUSTRIAL",
+        "BOLSA VERDE MEDIANA INDUSTRIAL",
+        "CAF├ë",
+        "CEPILLO DE BA├æO",
+        "COLADOR",
+        "DETERGENTE",
+        "ELIMINADOR DE OLORES",
+        "ESCOBILLON",
+        "ESPONJA ALAMBRE",
+        "ESPONJA DE BRILLO",
+        "FILTRO DE 2",
+        "FILTRO DE 8",
+        "GUANTES",
+        "JABON DE MANO",
+        "JABON LOZA LIQUIDO",
+        "JABON PARA MANOS",
+        "LIMPIDO",
+        "PAPEL HIGIENICO",
+        "PAPEL HIGIENICO PEQUE├æO",
+        "RAID LATA",
+        "SABRA",
+        "SERVILLETAS",
+        "SILICONA",
+        "TOALLAS DE MANO",
+        "VASOS DESECHABLES",
+        "VINAGRE"
+      ],
+      "uniqueAreaCount": 12,
+      "uniqueAreas": [
+        "ADMINISTRATIVO",
+        "AFUERA",
+        "ALMACEN",
+        "BODEGA REDDI",
+        "DISTRIBUCION",
+        "LABORATORIO",
+        "MANTENIMIENTO",
+        "MERCADEO Y VENTAS",
+        "OFICINAS",
+        "PORTERIA",
+        "PRODUCCION",
+        "TALENTO HUMANO"
+      ]
+    }
+  ]
+}
