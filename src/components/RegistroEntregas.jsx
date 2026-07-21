@@ -1,13 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MESES } from '../data/productos';
 import { fetchAreas, fetchProductos } from '../services/catalogosService';
 import {
     createEntrega,
     fetchEntregas,
     monthToApiParam,
+    productToApiParam,
     validateRow,
 } from '../services/entregasService';
 import { exportControlEntregas } from '../utils/exportExcel';
+
+const PRODUCT_FILTER_DEBOUNCE_MS = 400;
 
 const EMPTY_ROW = () => ({
     fecha: '',
@@ -96,23 +99,42 @@ export default function RegistroEntregas() {
     const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0 });
     const [globalMessage, setGlobalMessage] = useState(null);
     const [filtroMes, setFiltroMes] = useState('');
-    const [filtroProducto, setFiltroProducto] = useState('');
+    const [filtroProductoInput, setFiltroProductoInput] = useState('');
+    const [filtroProductoApi, setFiltroProductoApi] = useState('');
+    const entregasRequestSeq = useRef(0);
 
-    const loadEntregas = useCallback(async (page = 1, monthFilter = filtroMes) => {
+    const loadEntregas = useCallback(async (
+        page = 1,
+        monthFilter = filtroMes,
+        productFilter = filtroProductoApi,
+    ) => {
+        const requestSeq = ++entregasRequestSeq.current;
+
         setEntregasLoading(true);
         setEntregasError(null);
 
         try {
             const monthParam = monthToApiParam(monthFilter);
-            const result = await fetchEntregas({ page, ...monthParam });
+            const productParam = productToApiParam(productFilter);
+            const result = await fetchEntregas({ page, ...monthParam, ...productParam });
+
+            if (requestSeq !== entregasRequestSeq.current) {
+                return;
+            }
+
             setLoadedRows(result.data);
             setPagination(result.meta);
         } catch (err) {
+            if (requestSeq !== entregasRequestSeq.current) {
+                return;
+            }
             setEntregasError(formatApiError(err));
         } finally {
-            setEntregasLoading(false);
+            if (requestSeq === entregasRequestSeq.current) {
+                setEntregasLoading(false);
+            }
         }
-    }, [filtroMes]);
+    }, [filtroMes, filtroProductoApi]);
 
     useEffect(() => {
         let cancelled = false;
@@ -150,8 +172,16 @@ export default function RegistroEntregas() {
     }, []);
 
     useEffect(() => {
-        loadEntregas(1, filtroMes);
-    }, [filtroMes, loadEntregas]);
+        const timer = setTimeout(() => {
+            setFiltroProductoApi(filtroProductoInput.trim());
+        }, PRODUCT_FILTER_DEBOUNCE_MS);
+
+        return () => clearTimeout(timer);
+    }, [filtroProductoInput]);
+
+    useEffect(() => {
+        loadEntregas(1, filtroMes, filtroProductoApi);
+    }, [filtroMes, filtroProductoApi, loadEntregas]);
 
     const updateDraftRow = (rowIdx, patch) => {
         setDraftRows(prev => prev.map((r, i) =>
@@ -204,7 +234,7 @@ export default function RegistroEntregas() {
             });
 
             setGlobalMessage(`Entrega #${entrega.id} guardada correctamente.`);
-            await loadEntregas(1, filtroMes);
+            await loadEntregas(1, filtroMes, filtroProductoApi);
         } catch (err) {
             updateDraftRow(rowIdx, {
                 saving: false,
@@ -222,17 +252,15 @@ export default function RegistroEntregas() {
         });
     };
 
-    const filteredLoadedRows = loadedRows.filter(r => matchesProductFilter(r, filtroProducto));
-
     const filteredDraftRows = draftRows.filter(r => {
         const matchMes = filtroMes === '' || r.fecha === '' || (
             r.fecha !== '' && new Date(r.fecha + 'T00:00:00').getMonth() === Number(filtroMes)
         );
-        return matchMes && matchesProductFilter(r, filtroProducto);
+        return matchMes && matchesProductFilter(r, filtroProductoInput);
     });
 
     const displayRows = [
-        ...filteredLoadedRows.map(row => ({ row, kind: 'loaded' })),
+        ...loadedRows.map(row => ({ row, kind: 'loaded' })),
         ...filteredDraftRows.map((row, idx) => ({ row, kind: 'draft', draftIdx: draftRows.indexOf(row), idx })),
     ];
 
@@ -494,8 +522,8 @@ export default function RegistroEntregas() {
                     className="filter-select"
                     placeholder="Filtrar por producto..."
                     style={{ minWidth: 200 }}
-                    value={filtroProducto}
-                    onChange={e => setFiltroProducto(e.target.value)}
+                    value={filtroProductoInput}
+                    onChange={e => setFiltroProductoInput(e.target.value)}
                 />
                 {filtroMes !== '' && (
                     <button
@@ -577,7 +605,7 @@ export default function RegistroEntregas() {
                     <button
                         type="button"
                         disabled={entregasLoading || pagination.current_page <= 1}
-                        onClick={() => loadEntregas(pagination.current_page - 1, filtroMes)}
+                        onClick={() => loadEntregas(pagination.current_page - 1, filtroMes, filtroProductoApi)}
                         style={{
                             background: '#fff', border: '1px solid #cbd5e1', borderRadius: 6,
                             padding: '0.25rem 0.65rem', cursor: pagination.current_page <= 1 ? 'default' : 'pointer',
@@ -592,7 +620,7 @@ export default function RegistroEntregas() {
                     <button
                         type="button"
                         disabled={entregasLoading || pagination.current_page >= pagination.last_page}
-                        onClick={() => loadEntregas(pagination.current_page + 1, filtroMes)}
+                        onClick={() => loadEntregas(pagination.current_page + 1, filtroMes, filtroProductoApi)}
                         style={{
                             background: '#fff', border: '1px solid #cbd5e1', borderRadius: 6,
                             padding: '0.25rem 0.65rem',

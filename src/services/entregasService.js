@@ -74,9 +74,25 @@ export function monthToApiParam(monthIndex) {
 }
 
 /**
+ * Parámetro de API para filtro por nombre de producto (búsqueda parcial).
+ * @param {string} producto
+ * @returns {{ producto?: string }}
+ */
+export function productToApiParam(producto) {
+    const trimmed = String(producto || '').trim();
+    if (!trimmed) {
+        return {};
+    }
+
+    return { producto: trimmed };
+}
+
+/**
  * @param {object} [params]
  * @param {number} [params.page]
  * @param {number} [params.mes] - Índice de mes 0-11 (filtra por mes sin restringir año)
+ * @param {string} [params.producto] - Búsqueda parcial por nombre de producto
+ * @param {number} [params.producto_id]
  * @param {string} [params.desde]
  * @param {string} [params.hasta]
  * @param {string} [params.fuente]
@@ -88,6 +104,12 @@ export async function fetchEntregas(params = {}) {
     if (params.page) query.set('page', String(params.page));
     if (params.mes !== undefined && params.mes !== null && params.mes !== '') {
         query.set('mes', String(params.mes));
+    }
+    if (params.producto) {
+        query.set('producto', String(params.producto).trim());
+    }
+    if (params.producto_id) {
+        query.set('producto_id', String(params.producto_id));
     }
     if (params.desde) query.set('desde', params.desde);
     if (params.hasta) query.set('hasta', params.hasta);
