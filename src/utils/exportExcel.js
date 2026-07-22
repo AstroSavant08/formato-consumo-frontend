@@ -185,22 +185,25 @@ export async function exportConsumoMes(rows, mesIdx, anio) {
 }
 
 // ── FORMATO DE PEDIDO ─────────────────────────────────────────────────────────
-export async function exportFormatoPedido(rows, mes, anio, pedidoEspecial, firma) {
+export async function exportFormatoPedido(rows, anio, pedidoEspecial, firma) {
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet('Formato de Pedido');
+  wb.creator = 'Formato Consumo';
+  const ws = wb.addWorksheet('Formato de Pedido', { views: [{ state: 'frozen', ySplit: 2 }] });
+  const totalCols = 3 + MESES_SHORT.length + 2; // #, producto, stock, 12 meses, total año, dinero
 
   ws.columns = [
     { width: 5 },
-    { width: 44 },
-    { width: 14 },
-    { width: 16 },
+    { width: 42 },
+    { width: 13 },
+    ...MESES_SHORT.map(() => ({ width: 9 })),
+    { width: 11 },
     { width: 18 },
   ];
 
   // Título
-  ws.mergeCells(1, 1, 1, 5);
+  ws.mergeCells(1, 1, 1, totalCols);
   const t = ws.getCell('A1');
-  t.value = `FORMATO DE PEDIDO — ${mes.toUpperCase()} ${anio}`;
+  t.value = `FORMATO DE PEDIDO — ${anio}`;
   t.font = { ...WHITE_FONT, size: 13 };
   t.fill = HEADER_FILL;
   t.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -208,17 +211,33 @@ export async function exportFormatoPedido(rows, mes, anio, pedidoEspecial, firma
   ws.getRow(1).height = 28;
 
   // Cabeceras
-  const hr = ws.addRow(['#', 'PRODUCTOS', 'Stock debido', 'Cantidad a solicitar', 'Dinero a solicitar']);
-  hr.height = 22;
-  setRow(hr, WHITE_FONT, HEADER_FILL2, { horizontal: 'center', vertical: 'middle' });
-  hr.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
+  const headers = [
+    '#',
+    'PRODUCTOS',
+    'Stock debido',
+    ...MESES_SHORT.map(m => `Cant.\n${m}`),
+    'Total\nAño',
+    'Dinero a\nsolicitar',
+  ];
+  const hr = ws.addRow(headers);
+  hr.height = 36;
+  hr.eachCell((cell, col) => {
+    cell.fill = HEADER_FILL2;
+    cell.font = WHITE_FONT;
+    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    cell.border = thinBorder;
+  });
+  hr.getCell(2).alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
 
   rows.forEach((p, i) => {
+    const cantidades = MESES_SHORT.map((_, mi) => Number(p.cantidades?.[mi]) || 0);
+    const totalAnio = cantidades.reduce((s, v) => s + v, 0);
     const dr = ws.addRow([
       p.id,
       p.nombre,
-      p.stockDebido,
-      Number(p.cantidadSolicitar) || 0,
+      Number(p.stockDebido) || 0,
+      ...cantidades,
+      totalAnio,
       p.dineroSolicitado || '',
     ]);
     dr.height = 18;
@@ -229,13 +248,34 @@ export async function exportFormatoPedido(rows, mes, anio, pedidoEspecial, firma
       cell.border = thinBorder;
       cell.alignment = { vertical: 'middle', horizontal: col <= 2 ? 'left' : 'right' };
     });
+    const totalCell = dr.getCell(totalCols - 1);
+    totalCell.font = BOLD_DARK;
+    totalCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E7FF' } };
   });
+
+  // Totales
+  const totRow = ws.addRow([
+    '',
+    'TOTALES',
+    rows.reduce((s, r) => s + (Number(r.stockDebido) || 0), 0),
+    ...MESES_SHORT.map((_, mi) =>
+      rows.reduce((s, r) => s + (Number(r.cantidades?.[mi]) || 0), 0)
+    ),
+    rows.reduce(
+      (s, r) => s + (r.cantidades ?? []).reduce((a, v) => a + (Number(v) || 0), 0),
+      0
+    ),
+    '',
+  ]);
+  totRow.height = 20;
+  setRow(totRow, WHITE_FONT, HEADER_FILL, { horizontal: 'right', vertical: 'middle' });
+  totRow.getCell(2).alignment = { horizontal: 'left', vertical: 'middle' };
 
   // Espacio
   ws.addRow([]);
 
   // Pedido especial
-  ws.mergeCells(ws.rowCount + 1, 1, ws.rowCount + 1, 5);
+  ws.mergeCells(ws.rowCount + 1, 1, ws.rowCount + 1, totalCols);
   const peTitle = ws.getCell(`A${ws.rowCount}`);
   peTitle.value = 'PEDIDO ESPECIAL / NOVEDAD';
   peTitle.font = { color: { argb: 'FF92400E' }, bold: true, size: 11 };
@@ -246,27 +286,29 @@ export async function exportFormatoPedido(rows, mes, anio, pedidoEspecial, firma
 
   // Sub-headers especial
   const phRow = ws.rowCount + 1;
-  ws.mergeCells(phRow, 1, phRow, 4);
+  ws.mergeCells(phRow, 1, phRow, totalCols - 1);
   ws.getCell(`A${phRow}`).value = 'Qué';
   ws.getCell(`A${phRow}`).font = BOLD_DARK;
   ws.getCell(`A${phRow}`).fill = EVEN_FILL;
   ws.getCell(`A${phRow}`).border = thinBorder;
   ws.getCell(`A${phRow}`).alignment = { horizontal: 'left', vertical: 'middle' };
-  ws.getCell(`E${phRow}`).value = 'Cantidad';
-  ws.getCell(`E${phRow}`).font = BOLD_DARK;
-  ws.getCell(`E${phRow}`).fill = EVEN_FILL;
-  ws.getCell(`E${phRow}`).border = thinBorder;
-  ws.getCell(`E${phRow}`).alignment = { horizontal: 'center', vertical: 'middle' };
+  const cantHeaderCell = ws.getCell(phRow, totalCols);
+  cantHeaderCell.value = 'Cantidad';
+  cantHeaderCell.font = BOLD_DARK;
+  cantHeaderCell.fill = EVEN_FILL;
+  cantHeaderCell.border = thinBorder;
+  cantHeaderCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
   pedidoEspecial.filter(pe => pe.que || pe.cantidad).forEach(pe => {
     const r = ws.rowCount + 1;
-    ws.mergeCells(r, 1, r, 4);
+    ws.mergeCells(r, 1, r, totalCols - 1);
     ws.getCell(`A${r}`).value = pe.que;
     ws.getCell(`A${r}`).border = thinBorder;
     ws.getCell(`A${r}`).alignment = { vertical: 'middle' };
-    ws.getCell(`E${r}`).value = Number(pe.cantidad) || '';
-    ws.getCell(`E${r}`).border = thinBorder;
-    ws.getCell(`E${r}`).alignment = { horizontal: 'right', vertical: 'middle' };
+    const cantCell = ws.getCell(r, totalCols);
+    cantCell.value = Number(pe.cantidad) || '';
+    cantCell.border = thinBorder;
+    cantCell.alignment = { horizontal: 'right', vertical: 'middle' };
     ws.getRow(r).height = 18;
   });
 
@@ -280,20 +322,20 @@ export async function exportFormatoPedido(rows, mes, anio, pedidoEspecial, firma
   ];
   fields.forEach(([label, val]) => {
     const r = ws.rowCount + 1;
-    ws.mergeCells(r, 1, r, 2);
+    ws.mergeCells(r, 1, r, 4);
     ws.getCell(`A${r}`).value = label;
     ws.getCell(`A${r}`).font = BOLD_DARK;
     ws.getCell(`A${r}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2FE' } };
     ws.getCell(`A${r}`).border = thinBorder;
-    ws.mergeCells(r, 3, r, 5);
-    ws.getCell(`C${r}`).value = val;
-    ws.getCell(`C${r}`).font = DARK_FONT;
-    ws.getCell(`C${r}`).border = thinBorder;
+    ws.mergeCells(r, 5, r, totalCols);
+    ws.getCell(`E${r}`).value = val;
+    ws.getCell(`E${r}`).font = DARK_FONT;
+    ws.getCell(`E${r}`).border = thinBorder;
     ws.getRow(r).height = 18;
   });
 
   const buf = await wb.xlsx.writeBuffer();
-  saveAs(new Blob([buf]), `Pedido_${mes}_${anio}.xlsx`);
+  saveAs(new Blob([buf]), `Pedido_${anio}.xlsx`);
 }
 
 // ── REGISTRO CONTROL DE ENTREGAS ─────────────────────────────────────────────

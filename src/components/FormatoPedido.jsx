@@ -1,30 +1,187 @@
-import { useState, useMemo } from 'react';
-import { MESES, MESES_SHORT, initPedidoMes } from '../data/productos';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { MESES, MESES_SHORT } from '../data/productos';
+import {
+    buildPedidoRowsFromProductos,
+    fetchProductos,
+} from '../services/catalogosService';
+import {
+    buildFormatoPedidoPayload,
+    defaultEspecialRows,
+    defaultFirma,
+    fetchFormatoPedido,
+    FormatoPedidoValidationError,
+    mapEspecialFromApi,
+    mapFirmaFromApi,
+    mergeCatalogWithPedidoPlan,
+    saveFormatoPedido,
+} from '../services/formatoPedidoService';
 import { exportFormatoPedido } from '../utils/exportExcel';
 
 const ANIO_ACTUAL = new Date().getFullYear();
 const MES_ACTUAL = new Date().getMonth();
 
-const EMPTY_ESPECIAL = () => ({ que: '', cantidad: '' });
+function formatApiError(err) {
+    if (err?.data?.errors) {
+        return Object.values(err.data.errors).flat().join(' ');
+    }
+    return err?.data?.message || err?.message || 'Error de conexión con la API.';
+}
 
 export default function FormatoPedido() {
-    const [rows, setRows] = useState(initPedidoMes);
+    const [rows, setRows] = useState([]);
+    const [catalogLoading, setCatalogLoading] = useState(true);
+    const [catalogError, setCatalogError] = useState(null);
+    const [catalogReady, setCatalogReady] = useState(false);
+    const [planLoading, setPlanLoading] = useState(false);
+    const [planError, setPlanError] = useState(null);
+    const [planFound, setPlanFound] = useState(null);
     const [anio, setAnio] = useState(ANIO_ACTUAL);
-    const [especial, setEspecial] = useState([EMPTY_ESPECIAL(), EMPTY_ESPECIAL(), EMPTY_ESPECIAL()]);
-    const [firma, setFirma] = useState({
-        fecha: new Date().toLocaleDateString('es-CO'),
-        solicitadoPor: '',
-        autorizadoPor: '',
-        cantidadDinero: '',
-    });
+    const [anioInput, setAnioInput] = useState(String(ANIO_ACTUAL));
+    const [especial, setEspecial] = useState(defaultEspecialRows());
+    const [firma, setFirma] = useState(defaultFirma());
+    const [isDirty, setIsDirty] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
+    const [saveError, setSaveError] = useState('');
+
+    const catalogProductosRef = useRef([]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadCatalog() {
+            setCatalogLoading(true);
+            setCatalogError(null);
+            setCatalogReady(false);
+
+            try {
+                const productos = await fetchProductos();
+
+                if (!cancelled) {
+                    catalogProductosRef.current = productos;
+                    setCatalogReady(true);
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setCatalogError(formatApiError(err));
+                    catalogProductosRef.current = [];
+                    setRows([]);
+                }
+            } finally {
+                if (!cancelled) {
+                    setCatalogLoading(false);
+                }
+            }
+        }
+
+        loadCatalog();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!catalogReady || catalogError) {
+            return undefined;
+        }
+
+        let cancelled = false;
+
+        async function loadPlan() {
+            setPlanLoading(true);
+            setPlanError(null);
+            setPlanFound(null);
+            setSaving(false);
+            setSaveSuccess(false);
+            setSaveError('');
+
+            try {
+                const result = await fetchFormatoPedido(anio);
+
+                if (cancelled) {
+                    return;
+                }
+
+                if (result.found && result.data) {
+                    setRows(mergeCatalogWithPedidoPlan(
+                        catalogProductosRef.current,
+                        result.data.productos
+                    ));
+                    setEspecial(mapEspecialFromApi(result.data.pedido_especial));
+                    setFirma(mapFirmaFromApi(result.data.firma));
+                    setPlanFound(true);
+                } else {
+                    setRows(buildPedidoRowsFromProductos(catalogProductosRef.current));
+                    setEspecial(defaultEspecialRows());
+                    setFirma(defaultFirma());
+                    setPlanFound(false);
+                }
+
+                setIsDirty(false);
+            } catch (err) {
+                if (!cancelled) {
+                    setPlanError(formatApiError(err));
+                }
+            } finally {
+                if (!cancelled) {
+                    setPlanLoading(false);
+                }
+            }
+        }
+
+        loadPlan();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [anio, catalogReady, catalogError]);
+
+    const markDirty = useCallback(() => {
+        setIsDirty(true);
+        setSaveSuccess(false);
+        setSaveError('');
+    }, []);
+
+    const handleAnioChange = (rawValue) => {
+        const newAnio = Number(rawValue);
+        if (!Number.isFinite(newAnio) || newAnio < 2000 || newAnio > 2100) {
+            setAnioInput(String(anio));
+            return;
+        }
+
+        if (newAnio === anio) {
+            setAnioInput(String(anio));
+            return;
+        }
+
+        if (isDirty) {
+            const confirmed = window.confirm(
+                'Hay cambios sin guardar en este año. ¿Desea cambiar de año sin guardar?'
+            );
+            if (!confirmed) {
+                setAnioInput(String(anio));
+                return;
+            }
+        }
+
+        setAnioInput(String(newAnio));
+        setAnio(newAnio);
+    };
+
+    const handleAnioBlur = () => {
+        handleAnioChange(anioInput);
+    };
 
     const handleStock = (idx, val) => {
+        markDirty();
         setRows(prev => prev.map((r, i) =>
             i === idx ? { ...r, stockDebido: val === '' ? 0 : parseFloat(val) || 0 } : r
         ));
     };
 
     const handleCantidad = (rowIdx, mesIdx, val) => {
+        markDirty();
         setRows(prev => prev.map((r, i) => {
             if (i !== rowIdx) return r;
             const cant = [...r.cantidades];
@@ -34,20 +191,63 @@ export default function FormatoPedido() {
     };
 
     const handleDinero = (idx, val) => {
+        markDirty();
         setRows(prev => prev.map((r, i) =>
             i === idx ? { ...r, dineroSolicitado: val } : r
         ));
     };
 
     const handleEspecial = (idx, field, val) => {
+        markDirty();
         setEspecial(prev => prev.map((e, i) => i === idx ? { ...e, [field]: val } : e));
     };
 
-    const addEspecial = () => setEspecial(prev => [...prev, EMPTY_ESPECIAL()]);
+    const addEspecial = () => {
+        markDirty();
+        setEspecial(prev => [...prev, { que: '', cantidad: '' }]);
+    };
 
-    const removeEspecial = idx => setEspecial(prev => prev.filter((_, i) => i !== idx));
+    const removeEspecial = idx => {
+        markDirty();
+        setEspecial(prev => prev.filter((_, i) => i !== idx));
+    };
 
-    const handleFirma = (field, val) => setFirma(prev => ({ ...prev, [field]: val }));
+    const handleFirma = (field, val) => {
+        markDirty();
+        setFirma(prev => ({ ...prev, [field]: val }));
+    };
+
+    const handleSave = async () => {
+        setSaving(true);
+        setSaveSuccess(false);
+        setSaveError('');
+
+        try {
+            const payload = buildFormatoPedidoPayload(anio, rows, especial, firma);
+            const saved = await saveFormatoPedido(anio, payload);
+
+            if (saved) {
+                setRows(mergeCatalogWithPedidoPlan(
+                    catalogProductosRef.current,
+                    saved.productos
+                ));
+                setEspecial(mapEspecialFromApi(saved.pedido_especial));
+                setFirma(mapFirmaFromApi(saved.firma));
+            }
+
+            setPlanFound(true);
+            setIsDirty(false);
+            setSaveSuccess(true);
+        } catch (err) {
+            if (err instanceof FormatoPedidoValidationError) {
+                setSaveError(err.messages.join(' '));
+            } else {
+                setSaveError(formatApiError(err));
+            }
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const totalSolicitar = useMemo(() =>
         rows.reduce((s, r) => s + r.cantidades.reduce((a, v) => a + Number(v || 0), 0), 0),
@@ -59,8 +259,13 @@ export default function FormatoPedido() {
         [rows]
     );
 
+    const tableBusy = catalogLoading || planLoading;
+    const canEdit = !catalogLoading && !catalogError && !planLoading;
+    const canSave = canEdit && !planError && rows.length > 0 && !saving;
+    const canExport = canEdit && !planError && rows.length > 0;
+
     const handleExport = async () => {
-        await exportFormatoPedido(rows, MESES[mes], anio, especial, firma);
+        await exportFormatoPedido(rows, anio, especial, firma);
     };
 
     return (
@@ -78,10 +283,26 @@ export default function FormatoPedido() {
                             type="number"
                             className="input-cell"
                             style={{ width: 80, textAlign: 'center' }}
-                            value={anio}
-                            onChange={e => setAnio(Number(e.target.value))}
+                            value={anioInput}
+                            onChange={e => setAnioInput(e.target.value)}
+                            onBlur={handleAnioBlur}
+                            disabled={planLoading || saving}
                         />
-                        <button className="btn-export" onClick={handleExport}>
+                        <button
+                            className="btn-export"
+                            disabled={!canSave}
+                            onClick={handleSave}
+                            style={{ background: '#15803d' }}
+                            title="Guardar formato de pedido en la base de datos"
+                        >
+                            <i className={`bi ${saving ? 'bi-arrow-repeat' : 'bi-save'}`} />
+                            {saving ? 'Guardando...' : 'Guardar Formato de Pedido'}
+                        </button>
+                        <button
+                            className="btn-export"
+                            disabled={!canExport}
+                            onClick={handleExport}
+                        >
                             <i className="bi bi-file-earmark-excel" />
                             Exportar Excel
                         </button>
@@ -93,17 +314,73 @@ export default function FormatoPedido() {
                     <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
                         Año: <strong>{anio}</strong>
                     </span>
+                    {!catalogLoading && !catalogError && rows.length > 0 && (
+                        <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                            {rows.length} productos cargados
+                        </span>
+                    )}
+                    {planLoading && (
+                        <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                            <i className="bi bi-arrow-repeat me-1" />
+                            Cargando plan del año...
+                        </span>
+                    )}
+                    {!planLoading && planFound === false && canEdit && (
+                        <span style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                            Sin plan guardado para este año
+                        </span>
+                    )}
+                    {isDirty && (
+                        <span style={{ fontSize: '0.82rem', color: '#b45309' }}>
+                            Cambios sin guardar
+                        </span>
+                    )}
                     <span className="ms-auto" style={{ fontSize: '0.82rem', color: '#64748b' }}>
                         Total unidades solicitadas en el año: <strong>{totalSolicitar.toLocaleString('es-CO', { minimumFractionDigits: 1 })}</strong>
                     </span>
                 </div>
+
+                {(catalogLoading || catalogError || planError || saveSuccess || saveError) && (
+                    <div style={{ padding: '0.65rem 1rem', borderBottom: '1px solid #e2e8f0', fontSize: '0.82rem' }}>
+                        {catalogLoading && (
+                            <span style={{ color: '#64748b' }}>
+                                <i className="bi bi-arrow-repeat me-1" />
+                                Cargando productos desde la API...
+                            </span>
+                        )}
+                        {catalogError && (
+                            <span style={{ color: '#dc2626' }}>
+                                <i className="bi bi-exclamation-triangle me-1" />
+                                Productos: {catalogError}
+                            </span>
+                        )}
+                        {planError && (
+                            <span style={{ color: '#dc2626', display: 'block' }}>
+                                <i className="bi bi-exclamation-triangle me-1" />
+                                Plan: {planError}
+                            </span>
+                        )}
+                        {saveSuccess && (
+                            <span style={{ color: '#15803d' }}>
+                                <i className="bi bi-check-circle me-1" />
+                                Guardado correctamente
+                            </span>
+                        )}
+                        {saveError && (
+                            <span style={{ color: '#dc2626' }}>
+                                <i className="bi bi-exclamation-triangle me-1" />
+                                {saveError}
+                            </span>
+                        )}
+                    </div>
+                )}
 
                 {/* Tabla productos — 12 columnas de meses */}
                 <div className="table-wrap">
                     <table className="data-table">
                         <thead>
                             <tr>
-                                <th style={{ width: 36 }}>#</th>
+                                <th style={{ width: 36 }}>ID</th>
                                 <th style={{ textAlign: 'left', minWidth: 200 }}>PRODUCTOS</th>
                                 <th style={{ minWidth: 90 }}>Stock<br />debido</th>
                                 {MESES_SHORT.map((m, mi) => (
@@ -123,7 +400,21 @@ export default function FormatoPedido() {
                             </tr>
                         </thead>
                         <tbody>
-                            {rows.map((p, ri) => {
+                            {tableBusy && (
+                                <tr>
+                                    <td colSpan={17} style={{ textAlign: 'center', padding: '1.5rem', color: '#64748b' }}>
+                                        {catalogLoading ? 'Cargando catálogo de productos...' : 'Cargando plan del año...'}
+                                    </td>
+                                </tr>
+                            )}
+                            {!tableBusy && catalogError && (
+                                <tr>
+                                    <td colSpan={17} style={{ textAlign: 'center', padding: '1.5rem', color: '#dc2626' }}>
+                                        No se pudo cargar el catálogo de productos.
+                                    </td>
+                                </tr>
+                            )}
+                            {!tableBusy && !catalogError && rows.map((p, ri) => {
                                 const totalRow = p.cantidades.reduce((s, v) => s + Number(v || 0), 0);
                                 return (
                                     <tr key={p.id}>
@@ -141,6 +432,7 @@ export default function FormatoPedido() {
                                                 value={p.stockDebido === 0 ? '' : p.stockDebido}
                                                 placeholder="0"
                                                 onChange={e => handleStock(ri, e.target.value)}
+                                                disabled={!canEdit}
                                             />
                                         </td>
                                         {p.cantidades.map((val, mi) => (
@@ -162,6 +454,7 @@ export default function FormatoPedido() {
                                                     value={val === 0 ? '' : val}
                                                     placeholder="0"
                                                     onChange={e => handleCantidad(ri, mi, e.target.value)}
+                                                    disabled={!canEdit}
                                                 />
                                             </td>
                                         ))}
@@ -176,6 +469,7 @@ export default function FormatoPedido() {
                                                 placeholder="$ —"
                                                 value={p.dineroSolicitado || ''}
                                                 onChange={e => handleDinero(ri, e.target.value)}
+                                                disabled={!canEdit}
                                             />
                                         </td>
                                     </tr>
@@ -226,6 +520,7 @@ export default function FormatoPedido() {
                                             placeholder="Descripción del pedido especial..."
                                             value={e.que}
                                             onChange={ev => handleEspecial(i, 'que', ev.target.value)}
+                                            disabled={!canEdit}
                                         />
                                     </td>
                                     <td style={{ padding: '0.35rem 0.5rem' }}>
@@ -236,6 +531,7 @@ export default function FormatoPedido() {
                                             placeholder="0"
                                             value={e.cantidad}
                                             onChange={ev => handleEspecial(i, 'cantidad', ev.target.value)}
+                                            disabled={!canEdit}
                                         />
                                     </td>
                                     <td className="center">
@@ -244,6 +540,7 @@ export default function FormatoPedido() {
                                                 onClick={() => removeEspecial(i)}
                                                 style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1rem' }}
                                                 title="Eliminar fila"
+                                                disabled={!canEdit}
                                             >
                                                 <i className="bi bi-trash3" />
                                             </button>
@@ -256,11 +553,12 @@ export default function FormatoPedido() {
                 </div>
                 <button
                     onClick={addEspecial}
+                    disabled={!canEdit}
                     style={{
                         marginTop: '0.5rem', background: 'none', border: '1px dashed #f59e0b',
                         borderRadius: 7, padding: '0.3rem 0.9rem', color: '#92400e',
-                        fontSize: '0.82rem', cursor: 'pointer', fontWeight: 600,
-                        display: 'flex', alignItems: 'center', gap: '0.35rem'
+                        fontSize: '0.82rem', cursor: canEdit ? 'pointer' : 'not-allowed', fontWeight: 600,
+                        display: 'flex', alignItems: 'center', gap: '0.35rem', opacity: canEdit ? 1 : 0.6,
                     }}
                 >
                     <i className="bi bi-plus-circle" /> Agregar fila
@@ -282,6 +580,7 @@ export default function FormatoPedido() {
                                 type="text"
                                 value={firma.fecha}
                                 onChange={e => handleFirma('fecha', e.target.value)}
+                                disabled={!canEdit}
                             />
                         </div>
                     </div>
@@ -294,6 +593,7 @@ export default function FormatoPedido() {
                                 placeholder="Nombre del solicitante"
                                 value={firma.solicitadoPor}
                                 onChange={e => handleFirma('solicitadoPor', e.target.value)}
+                                disabled={!canEdit}
                             />
                         </div>
                     </div>
@@ -306,6 +606,7 @@ export default function FormatoPedido() {
                                 placeholder="Nombre del autorizador"
                                 value={firma.autorizadoPor}
                                 onChange={e => handleFirma('autorizadoPor', e.target.value)}
+                                disabled={!canEdit}
                             />
                         </div>
                     </div>
@@ -318,6 +619,7 @@ export default function FormatoPedido() {
                                 placeholder="ej: 2300000 COP"
                                 value={firma.cantidadDinero}
                                 onChange={e => handleFirma('cantidadDinero', e.target.value)}
+                                disabled={!canEdit}
                             />
                         </div>
                     </div>

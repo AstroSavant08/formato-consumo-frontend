@@ -105,6 +105,21 @@ export default function RegistroEntregas() {
     const [exporting, setExporting] = useState(false);
     const [exportError, setExportError] = useState(null);
     const entregasRequestSeq = useRef(0);
+    const draftRowsRef = useRef(draftRows);
+
+    useEffect(() => {
+        draftRowsRef.current = draftRows;
+    }, [draftRows]);
+
+    function normalizeCatalogAreas(payload) {
+        if (Array.isArray(payload)) {
+            return payload;
+        }
+        if (Array.isArray(payload?.data)) {
+            return payload.data;
+        }
+        return [];
+    }
 
     const loadEntregas = useCallback(async (
         page = 1,
@@ -153,7 +168,7 @@ export default function RegistroEntregas() {
                 ]);
 
                 if (!cancelled) {
-                    setAreas(areasData);
+                    setAreas(normalizeCatalogAreas(areasData));
                     setProductos(productosData);
                 }
             } catch (err) {
@@ -197,17 +212,19 @@ export default function RegistroEntregas() {
     };
 
     const handleProductoChange = (rowIdx, productoId) => {
-        const producto = productos.find(p => String(p.id) === String(productoId));
+        const normalizedId = String(productoId ?? '');
+        const producto = productos.find(p => String(p.id) === normalizedId);
         updateDraftRow(rowIdx, {
-            productoId,
+            productoId: normalizedId,
             producto: producto?.nombre || '',
             unidad: producto?.unidad_default || 'UND',
             saveError: null,
         });
     };
 
-    const handleAreaChange = (rowIdx, areaId) => {
-        const area = areas.find(a => String(a.id) === String(areaId));
+    const handleAreaChange = (rowIdx, rawAreaId) => {
+        const areaId = String(rawAreaId ?? '');
+        const area = areas.find(a => String(a.id) === areaId);
         updateDraftRow(rowIdx, {
             areaId,
             areaUso: area?.nombre || '',
@@ -216,8 +233,8 @@ export default function RegistroEntregas() {
     };
 
     const saveDraftRow = async (rowIdx) => {
-        const row = draftRows[rowIdx];
-        if (row.saved || row.saving) return;
+        const row = draftRowsRef.current[rowIdx];
+        if (!row || row.saved || row.saving) return;
 
         const validationError = validateRow(row);
         if (validationError) {
@@ -263,14 +280,12 @@ export default function RegistroEntregas() {
         return matchMes && matchesProductFilter(r, filtroProductoInput);
     });
 
-    const filteredDraftRows = getDraftExportRows();
-
     const displayRows = [
         ...loadedRows.map(row => ({ row, kind: 'loaded' })),
-        ...filteredDraftRows.map((row, idx) => ({ row, kind: 'draft', draftIdx: draftRows.indexOf(row), idx })),
+        ...draftRows.map((row, draftIdx) => ({ row, kind: 'draft', draftIdx })),
     ];
 
-    const draftExportRows = filteredDraftRows;
+    const draftExportRows = getDraftExportRows();
     const filasConDatos = pagination.total + draftExportRows.length;
 
     const handleExport = async () => {
@@ -321,19 +336,25 @@ export default function RegistroEntregas() {
                         className="input-full"
                         value={row.fecha}
                         disabled={isLocked}
-                        onChange={e => isDraft && handleDraftCell(draftIdx, 'fecha', e.target.value)}
+                        onChange={e => {
+                            if (!isDraft) return;
+                            handleDraftCell(draftIdx, 'fecha', e.target.value);
+                        }}
                     />
                 </td>
                 <td>
                     <select
                         className="input-full"
-                        value={row.productoId}
+                        value={String(row.productoId ?? '')}
                         disabled={isLocked || catalogLoading || !!catalogError}
-                        onChange={e => isDraft && handleProductoChange(draftIdx, e.target.value)}
+                        onChange={e => {
+                            if (!isDraft) return;
+                            handleProductoChange(draftIdx, e.target.value);
+                        }}
                     >
                         <option value="">Seleccione producto...</option>
                         {productos.map(p => (
-                            <option key={p.id} value={p.id}>{p.nombre}</option>
+                            <option key={p.id} value={String(p.id)}>{p.nombre}</option>
                         ))}
                     </select>
                 </td>
@@ -361,13 +382,16 @@ export default function RegistroEntregas() {
                 <td>
                     <select
                         className="input-full"
-                        value={row.areaId}
+                        value={String(row.areaId ?? '')}
                         disabled={isLocked || catalogLoading || !!catalogError}
-                        onChange={e => isDraft && handleAreaChange(draftIdx, e.target.value)}
+                        onChange={e => {
+                            if (!isDraft) return;
+                            handleAreaChange(draftIdx, e.target.value);
+                        }}
                     >
                         <option value="">Seleccione área...</option>
                         {areas.map(a => (
-                            <option key={a.id} value={a.id}>{a.nombre}</option>
+                            <option key={a.id} value={String(a.id)}>{a.nombre}</option>
                         ))}
                     </select>
                 </td>
